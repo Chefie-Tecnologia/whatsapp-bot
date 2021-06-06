@@ -1,16 +1,6 @@
 import axios from 'axios';
-import { IMessage } from '../interfaces/Message';
-
-interface IResponse {
-  data: IServerData;
-}
-
-interface IServerData {
-  cep: string;
-  logradouro: string;
-  bairro: string;
-  uf: string;
-}
+import type { IResponse, IServerData } from '../interfaces/Cep';
+import type { Message } from 'whatsapp-web.js';
 
 export default class EconomyCommand {
   cep: string;
@@ -18,23 +8,23 @@ export default class EconomyCommand {
     this.cep = cep;
   }
 
-  async execute(msg: IMessage) {
+  async execute(msg: Message) {
     const [_, setCep] = this.cep.split(' ');
 
     const chat = await msg.getChat();
 
-    chat.sendStateTyping();
+    await chat.sendStateTyping();
 
     try {
       const { data }: IResponse = await axios.get<IServerData>(
-        `https://viacep.com.br/ws/${setCep}/json/unicode/`
+        `https://brasilapi.com.br/api/cep/v1/${setCep}`,
       );
 
       return msg.reply(
-        `*CEP*: ${data.cep}\n*Logradouro*: ${data.logradouro}\n*Bairro*: ${data.bairro}\n*UF*: ${data.uf}`
+        `*CEP*: ${data.cep}\n*Logradouro*: ${data.street}\n*Cidade*: ${data.city}\n*Bairro*: ${data.neighborhood}\n*UF*: ${data.state}`,
       );
     } catch (error) {
-      return msg.reply(`CEP não localizado!`);
+      return msg.reply('CEP não localizado!');
     }
   }
 }
